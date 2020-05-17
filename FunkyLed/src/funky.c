@@ -46,11 +46,12 @@ int main(){
 	    					  // is 16. As such, when it reaches this value,
 	    					  // the leds value will be reset back to 1.
 	    else
-	    	leds = leds + !leds*8; // if the button is pressed, it will
-	    						   // add the expression !led*8 to the current value of leds.
+	    	leds = leds + ((!leds)<<3); // if the button is pressed, it will
+	    						   // add the expression !led<<3 to the current value of leds.
 	    						   // If leds != 0, the value of !led will be 0, thus no change
 	    						   // will occur. If leds = 0, then !leds will evaluate to 1.
-	    						   // By multiplying it with 8, we make the transition to the next LED,
+	    						   // By shifting left three time (multiplying with 8)
+	    						   //, we make the transition to the next LED,
 	    						   // i.e. from LD0(0b0001) -> LD3(0b1000).
 
 		XGpio_WriteReg((GPIO_ONE_BASEADDR), 0, leds);
