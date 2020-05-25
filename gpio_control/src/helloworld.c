@@ -49,9 +49,14 @@
 #include "platform.h"
 #include "xil_printf.h"
 #include "xgpio.h"
+#include "axi_pwm_generator.h"
 
 #define GPIO_SW_ID XPAR_AXI_GPIO_0_DEVICE_ID
 #define GPIO_LED_ID XPAR_AXI_GPIO_1_DEVICE_ID
+
+#define PWM_RED_BASE 	XPAR_PWM_RED_S00_AXI_BASEADDR
+#define PWM_GREEN_BASE 	XPAR_PWM_GREEN_S00_AXI_BASEADDR
+#define PWM_BLUE_BASE 	XPAR_PWM_BLUE_S00_AXI_BASEADDR
 
 #define SW_CHANNEL 2
 #define BTN_CHANNEL	1
@@ -60,6 +65,18 @@
 #define BTNS_MASK 	(0xF)
 #define SWS_MASK 	(0xF)
 #define LEDS_MASK 	(0xF)
+
+typedef enum {red=0, green, blue} rgb_state_t;
+typedef enum {not_pressed=0, pressed} btn_state_t;
+
+typedef union {
+	u8 array[3];
+	struct {
+		u8 red;
+		u8 green;
+		u8 blue;
+	};
+} rgb_duty_t;
 
 
 int main()
@@ -90,14 +107,35 @@ int main()
 	XGpio_SetDataDirection(&GpioBtnSw, BTN_CHANNEL, 0xFFFFFFFF);
 	XGpio_SetDataDirection(&GpioBtnSw, SW_CHANNEL, 0xFFFFFFFF);
 
+	AXI_PWM_GENERATOR_mWriteReg(PWM_RED_BASE, 	AXI_PWM_GENERATOR_CLOCK_DIVIDER_OFFSET, 100);
+	AXI_PWM_GENERATOR_mWriteReg(PWM_GREEN_BASE, AXI_PWM_GENERATOR_CLOCK_DIVIDER_OFFSET, 100);
+	AXI_PWM_GENERATOR_mWriteReg(PWM_BLUE_BASE, 	AXI_PWM_GENERATOR_CLOCK_DIVIDER_OFFSET, 100);
+
+	rgb_state_t state = red;
+	rgb_duty_t duty = {};
+	btn_state_t btn_state = not_pressed;
 	while (1)
 	{
 		u32 sw = XGpio_DiscreteRead(&GpioBtnSw, SW_CHANNEL);
 		sw &= SWS_MASK;
+		u32 btn = XGpio_DiscreteRead(&GpioBtnSw, BTN_CHANNEL);
+		btn &= BTNS_MASK;
 		u32 leds = XGpio_DiscreteRead(&GpioLed, LED_CHANNEL);
 		leds &= ~LEDS_MASK;
 		leds |= (sw & LEDS_MASK);
 		XGpio_DiscreteWrite(&GpioLed, LED_CHANNEL, leds);
+		if (btn_state == not_pressed && btn != 0)
+		{
+			duty.array[state] = sw << 4;
+			state == sizeof(duty.array)/sizeof(duty.array[0]) - 1 ? state = red : state++;
+			btn_state = pressed;
+		} else if (btn_state == pressed && btn == 0)
+		{
+			btn_state = not_pressed;
+		}
+		AXI_PWM_GENERATOR_mWriteReg(PWM_RED_BASE, 	AXI_PWM_GENERATOR_DUTY_FACTOR_OFFSET, duty.red);
+		AXI_PWM_GENERATOR_mWriteReg(PWM_GREEN_BASE, 	AXI_PWM_GENERATOR_DUTY_FACTOR_OFFSET, duty.green);
+		AXI_PWM_GENERATOR_mWriteReg(PWM_BLUE_BASE, 	AXI_PWM_GENERATOR_DUTY_FACTOR_OFFSET, duty.blue);
 	}
 
     cleanup_platform();
