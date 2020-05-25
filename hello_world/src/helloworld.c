@@ -48,13 +48,25 @@
 #include <stdio.h>
 #include "platform.h"
 #include "xil_printf.h"
+#include "xgpio_l.h"
+#include "xparameters.h"
+
+#define LED_GPIO_BADDR XPAR_AXI_GPIO_1_BASEADDR
+#define BTN_GPIO_BADDR XPAR_AXI_GPIO_0_BASEADDR
 
 
 int main()
 {
     init_platform();
+    u8 btn;
 
     print("Hello World\n\r");
+    Xil_Out8(LED_GPIO_BADDR, 0x5);
+
+    while(1) {
+    	btn=Xil_In8(BTN_GPIO_BADDR);
+    	xil_printf("%d\r\n", btn);
+    }
 
     cleanup_platform();
     return 0;
