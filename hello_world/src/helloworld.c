@@ -51,21 +51,26 @@
 #include "xgpio_l.h"
 #include "xparameters.h"
 
-#define LED_GPIO_BADDR XPAR_AXI_GPIO_1_BASEADDR
-#define BTN_GPIO_BADDR XPAR_AXI_GPIO_0_BASEADDR
+#define LED_GPIO_BADDR XPAR_AXI_GPIO_1_BASEADDR + XGPIO_DATA_OFFSET
+#define BTN_GPIO_BADDR XPAR_AXI_GPIO_0_BASEADDR + XGPIO_DATA_OFFSET
+#define SWT_GPIO_BADDR XPAR_AXI_GPIO_0_BASEADDR + XGPIO_DATA2_OFFSET
 
 
 int main()
 {
     init_platform();
     u8 btn;
+    u8 swt;
 
     print("Hello World\n\r");
-    Xil_Out8(LED_GPIO_BADDR, 0x5);
 
     while(1) {
+    	// Reading current state of buttons
     	btn=Xil_In8(BTN_GPIO_BADDR);
-    	xil_printf("%d\r\n", btn);
+    	// Reading current state of switches
+    	swt=Xil_In8(SWT_GPIO_BADDR);
+    	// Enabling LEDs based on the AND-ed values of buttons and switches
+    	Xil_Out8(LED_GPIO_BADDR, (btn & swt));
     }
 
     cleanup_platform();
