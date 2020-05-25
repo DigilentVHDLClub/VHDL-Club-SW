@@ -1,5 +1,15 @@
 /*
- * rgb_pwm.c: Light up RGB LED on Genesys ZU using three PWM signals, controlled using buttons and switches.
+ * rgb_pwm.c: Light up the RGB LED on Genesys ZU using three PWM signals, controlled using buttons and switches:
+ * 		- SW2 selects the Red channel;
+ * 		- SW1 selects the Green channel;
+ *		- SW0 selects the Blue channel.
+ *		NOTE: Even though all PWM channels work at the same time, only one color channel can be selected for
+ *	changing its PWM duty cycle at a time.
+ *		With the desired color channel selected:
+ *		- Press BTNU to increase the duty cycle of the channel;
+ *		- Press BTND to decrease the duty cycle of the channel.
+ *		NOTE: Keeping BTNU or BTND pressed will only modify the duty cycle once. Release the respective button
+ *	and press it again to change the duty cycle further.
  */
 
 #include <stdio.h>
